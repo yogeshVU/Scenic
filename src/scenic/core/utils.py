@@ -109,24 +109,43 @@ class DefaultIdentityDict:
         allPairs = ', '.join(pairs)
         return f'<DefaultIdentityDict {{{allPairs}}}>'
 
-# Generic type introspection functions backported to Python 3.7
-# (code taken from Python 3.8 implementation)
+# Generic type introspection functions backported to Python 3.6 and 3.7
+# (code based on the Python 3.8 implementation)
 
 def get_type_origin(tp):
-    assert sys.version_info >= (3, 7)
+    assert sys.version_info >= (3, 6)
     if sys.version_info >= (3, 8):
         return typing.get_origin(tp)
-    if isinstance(tp, typing._GenericAlias):
-        return tp.__origin__
     if tp is typing.Generic:
         return typing.Generic
+    if sys.version_info < (3, 7):
+        if issubclass(type(tp), typing.GenericMeta) or isinstance(tp, typing._Union):
+            origin = tp.__origin__
+            if origin is typing.Tuple:
+                return tuple
+            elif origin is typing.List:
+                return list
+            elif origin is typing.Dict:
+                return dict
+            elif origin is typing.Set:
+                return set
+            elif origin is typing.FrozenSet:
+                return frozenset
+            else:
+                return origin
+    elif isinstance(tp, typing._GenericAlias):
+        return tp.__origin__
     return None
 
 def get_type_args(tp):
-    assert sys.version_info >= (3, 7)
+    assert sys.version_info >= (3, 6)
     if sys.version_info >= (3, 8):
         return typing.get_args(tp)
-    if isinstance(tp, typing._GenericAlias) and not tp._special:
+    if sys.version_info < (3, 7):
+        hasArgs = issubclass(type(tp), typing.GenericMeta) or isinstance(tp, typing._Union)
+    else:
+        hasArgs = isinstance(tp, typing._GenericAlias)
+    if hasArgs and tp.__args__:
         res = tp.__args__
         if get_type_origin(tp) is collections.abc.Callable and res[0] is not Ellipsis:
             res = (list(res[:-1]), res[-1])

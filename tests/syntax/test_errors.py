@@ -267,7 +267,8 @@ def checkBug(bug, template, tmpdir, pytestconfig):
             f'runFile("{path}")'
         )
         args = [sys.executable, '-c', command]
-        result = subprocess.run(args, capture_output=True, text=True)
+        result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                universal_newlines=True)
         print('RESULTING STDERR:\n', result.stderr)
         assert result.returncode == 1
         lines = result.stderr.splitlines()

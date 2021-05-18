@@ -1,7 +1,5 @@
 """Scenic vectors and vector fields."""
 
-from __future__ import annotations
-
 import math
 from math import sin, cos
 import random
@@ -159,7 +157,7 @@ class Vector(Samplable, collections.abc.Sequence):
 	def y(self) -> float:
 		return self.coordinates[1]
 
-	def toVector(self) -> Vector:
+	def toVector(self) -> 'Vector':
 		return self
 
 	def sampleGiven(self, value):
@@ -169,19 +167,19 @@ class Vector(Samplable, collections.abc.Sequence):
 		return Vector(*(valueInContext(coord, context) for coord in self.coordinates))
 
 	@vectorOperator
-	def rotatedBy(self, angle) -> Vector:
+	def rotatedBy(self, angle) -> 'Vector':
 		"""Return a vector equal to this one rotated counterclockwise by the given angle."""
 		x, y = self.x, self.y
 		c, s = cos(angle), sin(angle)
 		return Vector((c * x) - (s * y), (s * x) + (c * y))
 
 	@vectorOperator
-	def offsetRotated(self, heading, offset) -> Vector:
+	def offsetRotated(self, heading, offset) -> 'Vector':
 		ro = offset.rotatedBy(heading)
 		return self + ro
 
 	@vectorOperator
-	def offsetRadially(self, radius, heading) -> Vector:
+	def offsetRadially(self, radius, heading) -> 'Vector':
 		return self.offsetRotated(heading, Vector(0, radius))
 
 	@scalarOperator
@@ -212,35 +210,35 @@ class Vector(Samplable, collections.abc.Sequence):
 		return math.hypot(*self.coordinates)
 
 	@vectorOperator
-	def normalized(self) -> Vector:
+	def normalized(self) -> 'Vector':
 		l = math.hypot(*self.coordinates)
 		return Vector(*(coord/l for coord in self.coordinates))
 
 	@vectorOperator
-	def __add__(self, other) -> Vector:
+	def __add__(self, other) -> 'Vector':
 		return Vector(self[0] + other[0], self[1] + other[1])
 
 	@vectorOperator
-	def __radd__(self, other) -> Vector:
+	def __radd__(self, other) -> 'Vector':
 		return Vector(self[0] + other[0], self[1] + other[1])
 
 	@vectorOperator
-	def __sub__(self, other) -> Vector:
+	def __sub__(self, other) -> 'Vector':
 		return Vector(self[0] - other[0], self[1] - other[1])
 
 	@vectorOperator
-	def __rsub__(self, other) -> Vector:
+	def __rsub__(self, other) -> 'Vector':
 		return Vector(other[0] - self[0], other[1] - self[1])
 
 	@vectorOperator
-	def __mul__(self, other) -> Vector:
+	def __mul__(self, other) -> 'Vector':
 		return Vector(*(coord*other for coord in self.coordinates))
 
-	def __rmul__(self, other) -> Vector:
+	def __rmul__(self, other) -> 'Vector':
 		return self.__mul__(other)
 
 	@vectorOperator
-	def __truediv__(self, other) -> Vector:
+	def __truediv__(self, other) -> 'Vector':
 		return Vector(*(coord/other for coord in self.coordinates))
 
 	def __len__(self):
@@ -272,7 +270,7 @@ class OrientedVector(Vector):
 
 	@staticmethod
 	@distributionFunction
-	def make(position, heading) -> OrientedVector:
+	def make(position, heading) -> 'OrientedVector':
 		return OrientedVector(*position, heading)
 
 	def toHeading(self):

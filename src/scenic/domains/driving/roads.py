@@ -10,14 +10,12 @@ be created from a map file using :obj:`Network.fromFile`.
     network information, such as traffic signals, has not yet been made available.
 """
 
-from __future__ import annotations  # allow forward references for type annotations
-
 import io
 import enum
 import hashlib
 import math
 import numbers
-from typing import FrozenSet, Union, Tuple, Optional, Sequence, List
+from typing import FrozenSet, Union, Tuple, Optional, Sequence, List, Dict
 import itertools
 import pathlib
 import gzip
@@ -106,7 +104,7 @@ class ManeuverType(enum.Enum):
     U_TURN = enum.auto()        #: U-turn.
 
     @staticmethod
-    def guessTypeFromLanes(start: Lane, end: Lane, connecting: Union[Lane, None],
+    def guessTypeFromLanes(start: 'Lane', end: 'Lane', connecting: 'Union[Lane, None]',
                            turnThreshold: float = math.radians(20)):
         """For formats lacking turn information, guess it from the geometry.
 
@@ -139,16 +137,16 @@ class Maneuver(_ElementReferencer):
     A maneuver which can be taken upon reaching the end of a lane.
     """
     type: ManeuverType = None   #: type of maneuver (straight, left turn, etc.)
-    startLane: Lane             #: starting lane of the maneuver
-    endLane: Lane               #: ending lane of the maneuver
+    startLane: 'Lane'             #: starting lane of the maneuver
+    endLane: 'Lane'               #: ending lane of the maneuver
 
     # the following attributes are None if startLane directly merges into endLane,
     # rather than connecting via a maneuver through an intersection
 
     #: connecting lane from the start to the end lane, if any (`None` for lane mergers)
-    connectingLane: Union[Lane, None] = None
+    connectingLane: 'Union[Lane, None]' = None
     #: intersection where the maneuver takes place, if any (`None` for lane mergers)
-    intersection: Union[Intersection, None] = None
+    intersection: 'Union[Intersection, None]' = None
 
     def __attrs_post_init__(self):
         assert self.type is ManeuverType.STRAIGHT or self.connectingLane is not None
@@ -159,7 +157,7 @@ class Maneuver(_ElementReferencer):
 
     @property
     @utils.cached
-    def conflictingManeuvers(self) -> Tuple[Maneuver]:
+    def conflictingManeuvers(self) -> 'Tuple[Maneuver]':
         """Tuple[Maneuver]: Maneuvers whose connecting lanes intersect this one's."""
         if not self.connectingLane:
             return ()
@@ -197,7 +195,7 @@ class NetworkElement(_ElementReferencer, PolygonalRegion):
     #: (In OpenDRIVE, for example, ids are not necessarily unique, so we invent our own.)
     uid: str = None
     id: Optional[str] = None    #: Identifier from underlying format, if any.
-    network: Network = None     #: Link to parent network.
+    network: 'Network' = None     #: Link to parent network.
 
     ## Traffic info
 
@@ -346,15 +344,15 @@ class Road(LinearElement):
     cause the `Road` to be partitioned into multiple road sections, within which
     the configuration of lanes is fixed.
     """
-    lanes: Tuple[Lane]
-    forwardLanes: Union[LaneGroup, None]    # lanes aligned with the direction of the road
-    backwardLanes: Union[LaneGroup, None]   # lanes going the other direction
-    laneGroups: Tuple[LaneGroup] = None
-    sections: Tuple[RoadSection]    # sections in order from start to end
+    lanes: 'Tuple[Lane]'
+    forwardLanes: 'Union[LaneGroup, None]'    # lanes aligned with the direction of the road
+    backwardLanes: 'Union[LaneGroup, None]'   # lanes going the other direction
+    laneGroups: 'Tuple[LaneGroup]' = None
+    sections: 'Tuple[RoadSection]'    # sections in order from start to end
 
-    signals: Tuple[Signal]
+    signals: 'Tuple[Signal]'
 
-    crossings: Tuple[PedestrianCrossing] = ()    # ordered from start to end
+    crossings: 'Tuple[PedestrianCrossing]' = ()    # ordered from start to end
 
     def __attrs_post_init__(self):
         super().__attrs_post_init__()
@@ -373,34 +371,34 @@ class Road(LinearElement):
         return super()._defaultHeadingAt(point)
 
     @distributionFunction
-    def sectionAt(self, point: Vectorlike, reject=False) -> Union[RoadSection, None]:
+    def sectionAt(self, point: Vectorlike, reject=False) -> 'Union[RoadSection, None]':
         """Get the `RoadSection` passing through a given point."""
         return self.network.findPointIn(point, self.sections, reject)
 
     @distributionFunction
-    def laneSectionAt(self, point: Vectorlike, reject=False) -> Union[LaneSection, None]:
+    def laneSectionAt(self, point: Vectorlike, reject=False) -> 'Union[LaneSection, None]':
         """Get the `LaneSection` passing through a given point."""
         point = _toVector(point)
         lane = self.laneAt(point, reject=reject)
         return None if lane is None else lane.sectionAt(point)
 
     @distributionFunction
-    def laneAt(self, point: Vectorlike, reject=False) -> Union[Lane, None]:
+    def laneAt(self, point: Vectorlike, reject=False) -> 'Union[Lane, None]':
         """Get the `Lane` passing through a given point."""
         return self.network.findPointIn(point, self.lanes, reject)
 
     @distributionFunction
-    def laneGroupAt(self, point: Vectorlike, reject=False) -> Union[LaneGroup, None]:
+    def laneGroupAt(self, point: Vectorlike, reject=False) -> 'Union[LaneGroup, None]':
         """Get the `LaneGroup` passing through a given point."""
         return self.network.findPointIn(point, self.laneGroups, reject)
 
     @distributionFunction
-    def crossingAt(self, point: Vectorlike, reject=False) -> Union[PedestrianCrossing, None]:
+    def crossingAt(self, point: Vectorlike, reject=False) -> 'Union[PedestrianCrossing, None]':
         """Get the :obj:`.PedestrianCrossing` passing through a given point."""
         return self.network.findPointIn(point, self.crossings, reject)
 
     @distributionFunction
-    def shiftLanes(self, point: Vectorlike, offset: int) -> Union[Vector, None]:
+    def shiftLanes(self, point: Vectorlike, offset: int) -> 'Union[Vector, None]':
         """Find the point equivalent to this one but shifted over some # of lanes."""
         raise NotImplementedError   # TODO implement this
 
@@ -416,35 +414,35 @@ class LaneGroup(LinearElement):
     """
 
     road: Road          #: Parent road.
-    lanes: Tuple[Lane]  #: Lanes, partially ordered with lane 0 being closest to the curb.
+    lanes: 'Tuple[Lane]'  #: Lanes, partially ordered with lane 0 being closest to the curb.
 
     #: Region representing the associated curb, which is not necessarily adjacent if
     #: there are parking lanes or some other kind of shoulder.
     curb: PolylineRegion
 
     # associated elements not actually part of this group
-    _sidewalk: Union[Sidewalk, None] = None     #: Adjacent sidewalk, if any.
-    _bikeLane: Union[Lane, None] = None
-    _shoulder: Union[Shoulder, None] = None     #: Adjacent shoulder, if any.
+    _sidewalk: 'Union[Sidewalk, None]' = None     #: Adjacent sidewalk, if any.
+    _bikeLane: 'Union[Lane, None]' = None
+    _shoulder: 'Union[Shoulder, None]' = None     #: Adjacent shoulder, if any.
     #: Opposite lane group of the same road, if any.
-    _opposite: Union[LaneGroup, None] = None
+    _opposite: 'Union[LaneGroup, None]' = None
 
     @property
-    def sidewalk(self) -> Sidewalk:
+    def sidewalk(self) -> 'Sidewalk':
         """The adjacent sidewalk; rejects if there is none."""
         return _rejectIfNonexistent(self._sidewalk, 'sidewalk')
 
     @property
-    def bikeLane(self) -> Lane:
+    def bikeLane(self) -> 'Lane':
         return _rejectIfNonexistent(self._bikeLane, 'bike lane')
 
     @property
-    def shoulder(self) -> Shoulder:
+    def shoulder(self) -> 'Shoulder':
         """The adjacent shoulder; rejects if there is none."""
         return _rejectIfNonexistent(self._shoulder, 'shoulder')
 
     @property
-    def opposite(self) -> LaneGroup:
+    def opposite(self) -> 'LaneGroup':
         """The opposite lane group of the same road; rejects if there is none."""
         return _rejectIfNonexistent(self._opposite, 'opposite lane group')
 
@@ -456,7 +454,7 @@ class LaneGroup(LinearElement):
         return super()._defaultHeadingAt(point)
 
     @distributionFunction
-    def laneAt(self, point: Vectorlike, reject=False) -> Union[Lane, None]:
+    def laneAt(self, point: Vectorlike, reject=False) -> 'Union[Lane, None]':
         """Get the `Lane` passing through a given point."""
         return self.network.findPointIn(point, self.lanes, reject)
 
@@ -469,14 +467,14 @@ class Lane(_ContainsCenterline, LinearElement):
 
     group: LaneGroup            # parent lane group
     road: Road                  # grandparent road
-    sections: Tuple[LaneSection]    # sections in order from start to end
+    sections: 'Tuple[LaneSection]'    # sections in order from start to end
 
-    adjacentLanes: Tuple[Lane] = ()     # adjacent lanes of same type, if any
+    adjacentLanes: 'Tuple[Lane]' = ()     # adjacent lanes of same type, if any
 
     maneuvers: Tuple[Maneuver] = ()     # possible maneuvers upon reaching the end of this lane
 
     @distributionFunction
-    def sectionAt(self, point: Vectorlike, reject=False) -> Union[LaneSection, None]:
+    def sectionAt(self, point: Vectorlike, reject=False) -> 'Union[LaneSection, None]':
         """Get the LaneSection passing through a given point."""
         return self.network.findPointIn(point, self.sections, reject)
 
@@ -494,11 +492,11 @@ class RoadSection(LinearElement):
     """
 
     road: Road      # parent road
-    lanes: Tuple[LaneSection] = ()   # in order, with lane 0 being the rightmost
-    forwardLanes: Tuple[LaneSection] = ()   # as above
-    backwardLanes: Tuple[LaneSection] = ()  # as above
+    lanes: 'Tuple[LaneSection]' = ()   # in order, with lane 0 being the rightmost
+    forwardLanes: 'Tuple[LaneSection]' = ()   # as above
+    backwardLanes: 'Tuple[LaneSection]' = ()  # as above
 
-    lanesByOpenDriveID: Dict[LaneSection]
+    lanesByOpenDriveID: 'Dict[LaneSection]'
 
     def __attrs_post_init__(self):
         super().__attrs_post_init__()
@@ -534,7 +532,7 @@ class RoadSection(LinearElement):
         return super()._defaultHeadingAt(point)
 
     @distributionFunction
-    def laneAt(self, point: Vectorlike, reject=False) -> Union[LaneSection, None]:
+    def laneAt(self, point: Vectorlike, reject=False) -> 'Union[LaneSection, None]':
         """Get the lane section passing through a given point."""
         return self.network.findPointIn(point, self.lane, reject)
 
@@ -563,41 +561,41 @@ class LaneSection(_ContainsCenterline, LinearElement):
     isForward: bool = True
 
     #: Adjacent lanes of the same type, if any.
-    adjacentLanes: Tuple[LaneSection] = ()
+    adjacentLanes: 'Tuple[LaneSection]' = ()
 
     #: Adjacent lane of same type to the left, if any.
-    _laneToLeft: Union[LaneSection, None] = None
+    _laneToLeft: 'Union[LaneSection, None]' = None
     #: Adjacent lane of same type to the right, if any.
-    _laneToRight: Union[LaneSection, None] = None
+    _laneToRight: 'Union[LaneSection, None]' = None
 
     #: Faster adjacent lane of same type, if any.
     #: Could be to left or right depending on the country.
-    _fasterLane: Union[LaneSection, None] = None
+    _fasterLane: 'Union[LaneSection, None]' = None
     #: Slower adjacent lane of same type, if any.
-    _slowerLane: Union[LaneSection, None] = None
+    _slowerLane: 'Union[LaneSection, None]' = None
 
     @property
-    def laneToLeft(self) -> LaneSection:
+    def laneToLeft(self) -> 'LaneSection':
         """The adjacent lane of the same type to the left; rejects if there is none."""
         return _rejectIfNonexistent(self._laneToLeft, 'lane to left')
 
     @property
-    def laneToRight(self) -> LaneSection:
+    def laneToRight(self) -> 'LaneSection':
         """The adjacent lane of the same type to the right; rejects if there is none."""
         return _rejectIfNonexistent(self._laneToRight, 'lane to right')
 
     @property
-    def fasterLane(self) -> LaneSection:
+    def fasterLane(self) -> 'LaneSection':
         """The faster adjacent lane of the same type; rejects if there is none."""
         return _rejectIfNonexistent(self._fasterLane, 'faster lane')
 
     @property
-    def slowerLane(self) -> LaneSection:
+    def slowerLane(self) -> 'LaneSection':
         """The slower adjacent lane of the same type; rejects if there is none."""
         return _rejectIfNonexistent(self._slowerLane, 'slower lane')
 
     @distributionFunction
-    def shiftedBy(self, offset: int) -> Union[LaneSection, None]:
+    def shiftedBy(self, offset: int) -> 'Union[LaneSection, None]':
         """Find the lane a given number of lanes over from this lane."""
         current = self
         for i in range(abs(offset)):
@@ -616,7 +614,7 @@ class Sidewalk(_ContainsCenterline, LinearElement):
     A sidewalk.
     """
     road: Road
-    crossings: Tuple[PedestrianCrossing]
+    crossings: 'Tuple[PedestrianCrossing]'
 
 @attr.s(auto_attribs=True, kw_only=True, repr=False)
 class PedestrianCrossing(_ContainsCenterline, LinearElement):
@@ -624,7 +622,7 @@ class PedestrianCrossing(_ContainsCenterline, LinearElement):
 
     A pedestrian crossing (crosswalk).
     """
-    parent: Union[Road, Intersection]
+    parent: 'Union[Road, Intersection]'
     startSidewalk: Sidewalk
     endSidewalk: Sidewalk
 
@@ -647,7 +645,7 @@ class Intersection(NetworkElement):
     outgoingLanes: Tuple[Lane]
     maneuvers: Tuple[Maneuver]  # all possible maneuvers through the intersection
 
-    signals: Tuple[Signal]
+    signals: 'Tuple[Signal]'
 
     crossings: Tuple[PedestrianCrossing]    # also ordered to preserve adjacency
 

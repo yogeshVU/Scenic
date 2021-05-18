@@ -22,7 +22,8 @@ def runAndGetP(tmpdir, program, options=[], addEgo=True):
     with open(path, 'w') as f:
         f.write(program)
     args = ['scenic', '--show-params', '--gather-stats', '1', path] + options
-    result = subprocess.run(args, capture_output=True, text=True)
+    result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            universal_newlines=True)
     assert result.returncode == 0
     lines = result.stdout.splitlines()
     value = None

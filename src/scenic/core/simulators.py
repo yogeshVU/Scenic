@@ -7,7 +7,7 @@ from collections import OrderedDict
 from scenic.core.object_types import (enableDynamicProxyFor, setDynamicProxyFor,
                                       disableDynamicProxyFor)
 from scenic.core.distributions import RejectionException
-import scenic.core.dynamics as dynamics
+from scenic.core import dynamics
 from scenic.core.errors import RuntimeParseError, InvalidScenarioError
 from scenic.core.vectors import Vector
 

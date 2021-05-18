@@ -17,7 +17,7 @@ import math
 
 from scenic.core.vectors import Vector
 from scenic.core.simulators import Action
-import scenic.domains.driving.model as _model
+from scenic.domains.driving import model as _model
 
 ## Actions available to all agents
 

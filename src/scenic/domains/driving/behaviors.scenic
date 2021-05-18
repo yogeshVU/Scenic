@@ -5,7 +5,7 @@ These behaviors are automatically imported when using the driving domain.
 
 import scenic.domains.driving.controllers as controllers
 from scenic.domains.driving.actions import *
-import scenic.domains.driving.model as _model
+from scenic.domains.driving import model as _model
 from scenic.simulators.carla.blueprints import *
 from scenic.domains.driving.roads import ManeuverType
 from scenic.core.regions import regionFromShapelyObject
