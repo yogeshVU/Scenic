@@ -54,6 +54,21 @@ class Scene:
 			self.workspace.zoomAround(plt, self.objects, expansion=zoom)
 		plt.show(block=block)
 
+	def save(self,zoom=None,fileName='./output/scene.png'):
+		"""Render a schematic of the scene for debugging."""
+		import matplotlib.pyplot as plt
+		plt.gca().set_aspect('equal')
+		# display map
+		self.workspace.show(plt)
+		# draw objects
+		for obj in self.objects:
+			obj.show(self.workspace, plt, highlight=(obj is self.egoObject))
+		# zoom in if requested
+		if zoom != None:
+			self.workspace.zoomAround(plt, self.objects, expansion=zoom)
+		plt.savefig(fileName)
+
+
 class Scenario:
 	"""Scenario()
 
